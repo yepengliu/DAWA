@@ -24,3 +24,71 @@ cd DAWA
 # install the required environment 
 pip install -r requirements.txt
 ```
+
+## How to use
+### Demo usage: generate a watermarked text given a prompt using Llama-2-13B
+
+```
+import torch
+from datasets import load_dataset
+import pandas as pd
+from tqdm import tqdm
+import nltk
+# nltk.download('punkt')
+
+from utils import load_model, pre_process
+from watermark import Watermark
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# load watermarking model
+watermark_model, watermark_tokenizer = load_model("meta-llama/Llama-2-13b-hf")
+# load auxiliary model
+auxilary_model, auxilary_tokenizer = load_model("meta-llama/Llama-2-7b-hf")
+
+watermark = Watermark(device=device,
+                  watermark_tokenizer=watermark_tokenizer,
+                  watermark_model=watermark_model,
+                  auxilary_tokenizer=auxilary_tokenizer,
+                  auxilary_model=auxilary_model,
+                  alpha=0.2,
+                  top_k=0,   # default 0, not used
+                  top_p=1.0,
+                  repetition_penalty=1.00,
+                  no_repeat_ngram_size=0,
+                  max_new_tokens=300,
+                  min_new_tokens=200,
+                  key=123,
+                  T = 1.0,
+                  start = 5,
+                  )
+
+prompt = " "   # input your prompt here
+
+# generate unwatermarked text
+uwm_text = watermark.generate_unwatermarked(prompt)
+# generate watermarked text
+wm_text = watermark.generate_watermarked(prompt)
+
+# detect unwatermarked text
+human_score = watermark.detection(human)
+
+# detect watermarked text
+wm_text_score = watermark.detection(wm_text)
+```
+
+### Evaluate the detection performance of DAWA on a dataset
+```
+python generation.py
+```
+
+## Citation
+If you find this repository useful for your research and applications, please cite our paper:
+
+```
+@article{he2024theoretically,
+  title={Theoretically Grounded Framework for LLM Watermarking: A Distribution-Adaptive Approach},
+  author={He, Haiyun and Liu, Yepeng and Wang, Ziqiao and Mao, Yongyi and Bu, Yuheng},
+  journal={arXiv preprint arXiv:2410.02890},
+  year={2024}
+}
+```
